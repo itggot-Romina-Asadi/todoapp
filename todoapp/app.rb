@@ -15,13 +15,11 @@ class App < Sinatra::Base
 		slim (:register)
 	end
 
-	post 'register' do
-		db = SQLite::Database.new(Todoapp.sqlite)
-		username = params[username]
-		password = params[passsword]
-
+	post '/register' do
+		db = SQLite::Database.new("todoapp.sqlite")
+		username = params[:username]
+		password = params[:passsword]
 		db.execute("INSERT INTO login (username, password) VALUES (?, ?)", [username,password])
-
 	end
 
 end           
