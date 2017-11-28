@@ -9,17 +9,24 @@ class App < Sinatra::Base
 		slim(:login)
 	end
 
+	get '/start' do
+		slim(:start)
+	end	
+
+
+
 	post '/login' do
 		db = SQLite3::Database.new("todoapp.sqlite")
 		username = params["username"]
 		password = params["password"]
-		if password == db.execute("SELECT password FROM login WHERE username=?", [username])
+		password_digest = db.execute("SELECT password FROM login WHERE username='#{username}'").join
+		password_digest = BCrypt::Password.new(password_digest)
+		if password_digest == password
 			session[:username] = username
-			redirect('/')
+			redirect('/start')
+		else
+			redirect('/register')
 		end
-	
-
-		# db.execute("SELECT username WHERe id=i")
 	end
 
 	get '/register' do
@@ -31,9 +38,10 @@ class App < Sinatra::Base
 		username = params["username"]
 		password = params["password"]
 		password2 = params["password2"]
-		# Kryptera lösenord
+		password_digest = BCrypt::Password.create("#{password}")
 		if password == password2
-			db.execute("INSERT INTO login (username, password) VALUES (?, ?)", [username,password])
+			db.execute("INSERT INTO login (username, password) VALUES (?, ?)", [username,password_digest])
+			redirect('/login')
 		else
 			raise ArgumentError
 			# Fixa argumenterror
