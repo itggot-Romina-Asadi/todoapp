@@ -9,11 +9,17 @@ class App < Sinatra::Base
 		slim(:login)
 	end
 
-	get '/start' do
-		slim(:start)
+	get '/register' do
+		slim (:register)
+	end
+
+	get '/todo' do
+		slim(:todo)
 	end	
 
-
+	get '/error' do
+		slim(:error, locals:{msg:session[:message]})
+	end	
 
 	post '/login' do
 		db = SQLite3::Database.new("todoapp.sqlite")
@@ -23,14 +29,10 @@ class App < Sinatra::Base
 		password_digest = BCrypt::Password.new(password_digest)
 		if password_digest == password
 			session[:username] = username
-			redirect('/start')
+			redirect('/todo')
 		else
 			redirect('/register')
 		end
-	end
-
-	get '/register' do
-		slim (:register)
 	end
 
 	post '/register' do
@@ -40,12 +42,16 @@ class App < Sinatra::Base
 		password2 = params["password2"]
 		password_digest = BCrypt::Password.create("#{password}")
 		if password == password2
-			db.execute("INSERT INTO login (username, password) VALUES (?, ?)", [username,password_digest])
+			begin
+				db.execute("INSERT INTO login (username, password) VALUES (?, ?)", [username,password_digest])
+			rescue
+				session[:message] = "The username is unavailable "
+				redirect('/error')
+			end
 			redirect('/login')
 		else
-			raise ArgumentError
-			# Fixa argumenterror
+			session[:message] = "Passwords doesn't match"
+			redirect('/error')
 		end
 	end
-
 end           
